@@ -1,0 +1,28 @@
+{
+  "name": "production-ready-sls-workshop",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sls": "serverless"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "dotenv": "^10.0.0",
+    "eslint": "^8.4.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.3",
+    "serverless": "^2.68.0",
+    "serverless-deployment-bucket": "^1.5.1",
+    "serverless-export-env": "^2.0.0",
+    "serverless-layers": "^2.5.1"
+  },
+  "dependencies": {
+    "aws4": "^1.11.0",
+    "axios": "^0.24.0",
+    "mustache": "^4.2.0"
+  }
+}
