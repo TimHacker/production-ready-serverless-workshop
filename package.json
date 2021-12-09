@@ -6,7 +6,8 @@
   "scripts": {
     "sls": "serverless",
     "dotEnv": "sls export-env --all",
-    "test": "npm run dotEnv && jest --silent"
+    "test": "npm run dotEnv && cross-env TEST_MODE=handler jest --silent",
+    "acceptance": "npm run dotEnv && cross-env TEST_MODE=http jest"
   },
   "keywords": [],
   "author": "",
