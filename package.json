@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@dazn/lambda-powertools-logger": "^1.28.1",
+    "@dazn/lambda-powertools-pattern-basic": "^1.29.0",
     "@middy/core": "^2.5.3",
     "@middy/ssm": "^2.5.3",
     "aws4": "^1.11.0",
