@@ -12,6 +12,10 @@ custom:
       - CognitoUserPoolServerClientId
     output:
       file: ./.env-outputs
+  stage: ${opt:stage, sls:stage}
+  logLevel:
+    prod: INFO
+    default: DEBUG
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
@@ -40,6 +44,7 @@ provider:
           - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
     serviceName: ${self:service}
     stage: ${sls:stage}
+    LOG_LEVEL: ${self:custom.logLevel.${self:custom.stage}, self:custom.logLevel.default}
 
 # you can overwrite defaults here
 #  stage: dev
