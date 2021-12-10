@@ -1,3 +1,4 @@
+const EventBridge = require('aws-sdk/clients/eventbridge');
 const APP_ROOT = '../../';
 const _ = require('lodash');
 
@@ -21,6 +22,22 @@ const viaHandler = async (event, functionName) => {
     response.body = JSON.parse(response.body);
   }
   return response;
+};
+
+const viaEventBridge = async (busName, source, detailType, detail) => {
+  const eventBridge = new EventBridge();
+  await eventBridge
+    .putEvents({
+      Entries: [
+        {
+          Source: source,
+          DetailType: detailType,
+          Detail: JSON.stringify(detail),
+          EventBusName: busName,
+        },
+      ],
+    })
+    .promise();
 };
 
 const respondFrom = async (httpRes) => ({
@@ -131,7 +148,13 @@ const we_invoke_notify_restaurant = async (event) => {
   if (mode === 'handler') {
     await viaHandler(event, 'notify-restaurant');
   } else {
-    throw new Error('not supported');
+    const busName = process.env.bus_name;
+    await viaEventBridge(
+      busName,
+      event.source,
+      event['detail-type'],
+      event.detail
+    );
   }
 };
 

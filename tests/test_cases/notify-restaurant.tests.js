@@ -2,60 +2,77 @@ const { init } = require('../steps/init');
 const when = require('../steps/when');
 const AWS = require('aws-sdk');
 const chance = require('chance').Chance();
+const messages = require('../messages');
 
 const mockPutEvents = jest.fn();
-AWS.EventBridge.prototype.putEvents = mockPutEvents;
 const mockPublish = jest.fn();
-AWS.SNS.prototype.publish = mockPublish;
 
-const describeWhenHandler = () =>
-  process.env.TEST_MODE === 'handler' ? describe : describe.skip;
+describe(`When we invoke the notify-restaurant function`, () => {
+  const event = {
+    source: 'big-mouth',
+    'detail-type': 'order_placed',
+    detail: {
+      orderId: chance.guid(),
+      restaurantName: 'Fangtasia',
+    },
+  };
 
-describeWhenHandler()(`When we invoke the notify-restaurant function`, () => {
   beforeAll(async () => {
     await init();
 
-    mockPutEvents.mockClear();
-    mockPublish.mockClear();
+    if (process.env.TEST_MODE === 'handler') {
+      AWS.EventBridge.prototype.putEvents = mockPutEvents;
+      AWS.SNS.prototype.publish = mockPublish;
 
-    mockPutEvents.mockReturnValue({
-      promise: async () => {},
-    });
-    mockPublish.mockReturnValue({
-      promise: async () => {},
-    });
+      mockPutEvents.mockReturnValue({
+        promise: async () => {},
+      });
+      mockPublish.mockReturnValue({
+        promise: async () => {},
+      });
+    } else {
+      messages.startListening();
+    }
 
-    const event = {
-      source: 'big-mouth',
-      'detail-type': 'order_placed',
-      detail: {
-        orderId: chance.guid(),
-        userEmail: chance.email(),
-        restaurantName: 'Fangtasia',
-      },
-    };
     await when.we_invoke_notify_restaurant(event);
   });
 
-  it(`Should publish message to SNS`, async () => {
-    expect(mockPublish).toBeCalledWith({
-      Message: expect.stringMatching(`"restaurantName":"Fangtasia"`),
-      TopicArn: expect.stringMatching(
-        process.env.restaurant_notification_topic
-      ),
-    });
+  afterAll(() => {
+    if (process.env.TEST_MODE === 'handler') {
+      mockPutEvents.mockClear();
+      mockPublish.mockClear();
+    }
   });
 
-  it(`Should publish event to EventBridge`, async () => {
-    expect(mockPutEvents).toBeCalledWith({
-      Entries: [
-        expect.objectContaining({
-          Source: 'big-mouth',
-          DetailType: 'restaurant_notified',
-          Detail: expect.stringContaining(`"restaurantName":"Fangtasia"`),
-          EventBusName: expect.stringMatching(process.env.bus_name),
-        }),
-      ],
+  if (process.env.TEST_MODE === 'handler') {
+    it(`Should publish message to SNS`, async () => {
+      expect(mockPublish).toBeCalledWith({
+        Message: expect.stringMatching(`"restaurantName":"Fangtasia"`),
+        TopicArn: expect.stringMatching(
+          process.env.restaurant_notification_topic
+        ),
+      });
     });
-  });
+
+    it(`Should publish event to EventBridge`, async () => {
+      expect(mockPutEvents).toBeCalledWith({
+        Entries: [
+          expect.objectContaining({
+            Source: 'big-mouth',
+            DetailType: 'restaurant_notified',
+            Detail: expect.stringContaining(`"restaurantName":"Fangtasia"`),
+            EventBusName: expect.stringMatching(process.env.bus_name),
+          }),
+        ],
+      });
+    });
+  } else {
+    it(`Should publish message to SNS`, async () => {
+      await messages.waitForMessage(
+        'sns',
+        process.env.restaurant_notification_topic,
+        JSON.stringify(event.detail)
+      );
+    }, 10000);
+  }
 });
