@@ -32,7 +32,7 @@ provider:
     useCloudFormation: true
 
   deploymentBucket:
-    name: workshop-${self:custom.name}-${sls:stage}-serverlessdeploymentbucket
+    name: workshop-${self:custom.name}-${self:custom.stage}-serverlessdeploymentbucket
     serverSideEncryption: AES256
 
   environment:
@@ -41,9 +41,9 @@ provider:
         - ''
         - - https://
           - !Ref ApiGatewayRestApi
-          - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
+          - .execute-api.${aws:region}.amazonaws.com/${self:custom.stage}
     serviceName: ${self:service}
-    stage: ${sls:stage}
+    stage: ${self:custom.stage}
     LOG_LEVEL: ${self:custom.logLevel.${self:custom.stage}, self:custom.logLevel.default}
 
 # you can overwrite defaults here
@@ -93,7 +93,7 @@ functions:
           - ''
           - - https://
             - !Ref ApiGatewayRestApi
-            - .execute-api.${aws:region}.amazonaws.com/${sls:stage}/restaurants
+            - .execute-api.${aws:region}.amazonaws.com/${self:custom.stage}/restaurants
       cognito_user_pool_id: !Ref CognitoUserPool
       cognito_client_id: !Ref WebCognitoUserPoolClient
       orders_api:
@@ -101,11 +101,11 @@ functions:
           - ''
           - - https://
             - !Ref ApiGatewayRestApi
-            - .execute-api.${aws:region}.amazonaws.com/${sls:stage}/orders
+            - .execute-api.${aws:region}.amazonaws.com/${self:custom.stage}/orders
     iamRoleStatements:
       - Effect: Allow
         Action: execute-api:Invoke
-        Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
+        Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${self:custom.stage}/GET/restaurants
 
   get-restaurants:
     handler: functions/get-restaurants.handler
@@ -122,7 +122,7 @@ functions:
         Resource: !GetAtt RestaurantsTable.Arn
       - Effect: Allow
         Action: ssm:GetParameters*
-        Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/get-restaurants/config
+        Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:custom.stage}/get-restaurants/config
 
   search-restaurants:
     handler: functions/search-restaurants.handler
@@ -143,8 +143,8 @@ functions:
       - Effect: Allow
         Action: ssm:GetParameters*
         Resource:
-          - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/config
-          - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/secretString
+          - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:custom.stage}/search-restaurants/config
+          - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${self:custom.stage}/search-restaurants/secretString
       - Effect: Allow
         Action: kms:Decrypt
         Resource: ${ssm:/dev/kmsArn}
@@ -232,7 +232,7 @@ resources:
   Conditions:
     IsE2eTest:
       Fn::Equals:
-        - ${sls:stage}
+        - ${self:custom.stage}
         - dev
 
   Resources:
@@ -303,17 +303,17 @@ resources:
       Type: AWS::SSM::Parameter
       Properties:
         Type: String
-        Name: /${self:service}/${sls:stage}/serviceUrl
+        Name: /${self:service}/${self:custom.stage}/serviceUrl
         Value:
           Fn::Join:
             - ''
             - - https://
               - !Ref ApiGatewayRestApi
-              - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
+              - .execute-api.${aws:region}.amazonaws.com/${self:custom.stage}
     EventBus:
       Type: AWS::Events::EventBus
       Properties:
-        Name: order_events_${sls:stage}_${self:custom.name}
+        Name: order_events_${self:custom.stage}_${self:custom.name}
     RestaurantNotificationTopic:
       Type: AWS::SNS::Topic
     E2eTestQueue:
