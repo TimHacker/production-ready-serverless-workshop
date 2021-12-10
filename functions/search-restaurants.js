@@ -29,8 +29,14 @@ module.exports.handler = middy(async (event, context) => {
     theme,
     context.config.defaultResults
   );
+
+  console.warn(`secret from SSM: '${context.secretString}'`);
+
   const response = {
     statusCode: 200,
+    headers: {
+      secret: context.secretString,
+    },
     body: JSON.stringify(restaurants),
   };
 
@@ -38,10 +44,11 @@ module.exports.handler = middy(async (event, context) => {
 }).use(
   ssm({
     cache: true,
-    cacheExpiry: 1 * 60 * 1000, // 1 mins
+    cacheExpiry: 1 * 60 * 1000, // 1 minute
     setToContext: true,
     fetchData: {
       config: `/${serviceName}/${stage}/search-restaurants/config`,
+      secretString: `/${serviceName}/${stage}/search-restaurants/secretString`,
     },
   })
 );
