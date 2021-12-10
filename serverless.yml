@@ -14,8 +14,8 @@ custom:
       file: ./.env-outputs
   stage: ${opt:stage, sls:stage}
   logLevel:
-    prod: INFO
-    default: DEBUG
+    prod: ERROR
+    default: INFO
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
@@ -45,6 +45,7 @@ provider:
     serviceName: ${self:service}
     stage: ${self:custom.stage}
     LOG_LEVEL: ${self:custom.logLevel.${self:custom.stage}, self:custom.logLevel.default}
+    SAMPLE_DEBUG_LOG_RATE: 0.1
 
 # you can overwrite defaults here
 #  stage: dev
