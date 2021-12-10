@@ -2,14 +2,16 @@ const middy = require('@middy/core');
 const ssm = require('@middy/ssm');
 const DocumentClient = require('aws-sdk/clients/dynamodb').DocumentClient;
 const dynamodb = new DocumentClient();
+const Log = require('@dazn/lambda-powertools-logger');
 
 const { serviceName, stage } = process.env;
 const tableName = process.env.restaurants_table;
 
 const findRestaurantsByTheme = async (theme, count) => {
-  console.log(
-    `finding (up to ${count}) restaurants with the theme ${theme}...`
-  );
+  Log.debug(`finding up to x restaurants with theme`, {
+    count,
+    theme,
+  });
   const req = {
     TableName: tableName,
     Limit: count,
@@ -18,7 +20,9 @@ const findRestaurantsByTheme = async (theme, count) => {
   };
 
   const resp = await dynamodb.scan(req).promise();
-  console.log(`found ${resp.Items.length} restaurants`);
+  Log.debug(`found restaurants`, {
+    count: resp.Items.length,
+  });
   return resp.Items;
 };
 
@@ -30,7 +34,9 @@ module.exports.handler = middy(async (event, context) => {
     context.config.defaultResults
   );
 
-  console.warn(`secret from SSM: '${context.secretString}'`);
+  Log.debug(`secret from SSM:`, {
+    secretString: context.secretString,
+  });
 
   const response = {
     statusCode: 200,
