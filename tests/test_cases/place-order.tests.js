@@ -7,6 +7,9 @@ const AWS = require('aws-sdk');
 const mockPutEvents = jest.fn();
 AWS.EventBridge.prototype.putEvents = mockPutEvents;
 
+const itWhenHandler = () =>
+  process.env.TEST_MODE === 'handler' ? it : it.skip;
+
 describe('Given an authenticated user', () => {
   let user;
 
@@ -35,19 +38,17 @@ describe('Given an authenticated user', () => {
       expect(resp.statusCode).toEqual(200);
     });
 
-    if (process.env.TEST_MODE === 'handler') {
-      it(`Should publish a message to EventBridge bus`, async () => {
-        expect(mockPutEvents).toBeCalledWith({
-          Entries: [
-            expect.objectContaining({
-              Source: 'big-mouth',
-              DetailType: 'order_placed',
-              Detail: expect.stringContaining(`"restaurantName":"Fangtasia"`),
-              EventBusName: expect.stringMatching(process.env.bus_name),
-            }),
-          ],
-        });
+    itWhenHandler()(`Should publish a message to EventBridge bus`, async () => {
+      expect(mockPutEvents).toBeCalledWith({
+        Entries: [
+          expect.objectContaining({
+            Source: 'big-mouth',
+            DetailType: 'order_placed',
+            Detail: expect.stringContaining(`"restaurantName":"Fangtasia"`),
+            EventBusName: expect.stringMatching(process.env.bus_name),
+          }),
+        ],
       });
-    }
+    });
   });
 });
