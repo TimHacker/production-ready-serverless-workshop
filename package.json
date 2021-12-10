@@ -28,6 +28,8 @@
     "serverless-layers": "^2.5.1"
   },
   "dependencies": {
+    "@middy/core": "^2.5.3",
+    "@middy/ssm": "^2.5.3",
     "aws4": "^1.11.0",
     "axios": "^0.24.0",
     "chance": "^1.1.8",
